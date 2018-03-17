@@ -3,6 +3,7 @@ import numpy as np
 from torch import nn
 from torch import optim
 from torch.autograd import Variable
+from tensorboardX import SummaryWriter
 #求三点的圆心
 x_train = np.array([[0,2.2] ,[1,2.5] ,[2,2.2]]  ,dtype=np.float32 )
 x_train = torch.from_numpy(x_train)
@@ -37,7 +38,7 @@ model = CenterOfCircle()
 #优化函数
 optimizer = optim.Adam(model.parameters(), lr=1e-4 , betas=(0.9, 0.99))  #试过SGD效果差，使用Adm
 
-
+writer = SummaryWriter()
 num_epochs = 20000
 for epoch in range(num_epochs):
      inputs = Variable(x_train)
@@ -47,8 +48,14 @@ for epoch in range(num_epochs):
      optimizer.zero_grad() # 梯度归零
      loss.backward() # 反向传播
      optimizer.step() # 更新参数
+
      if (epoch + 1) % 20 == 0:
          print('Epoch[{}/{}], loss: {:.6f}'.format(epoch + 1, num_epochs, loss.data[0]))
+         writer.add_scalar('loss', loss.data[0], epoch)
+         for name, param in model.named_parameters():
+             writer.add_histogram(name, param.clone().cpu().data.numpy(), epoch)
 model.eval()
 predict = model(Variable(x_train))
 print(predict[0].data)
+
+writer.close()
